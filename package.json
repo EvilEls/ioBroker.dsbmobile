@@ -6,6 +6,10 @@
   "author": "EvilEls",
   "license": "UNLICENSED",
   "keywords": ["iobroker", "dsbmobile", "school", "substitution-plan"],
-  "engines": {"node": ">=20"},
-  "dependencies": {"@iobroker/adapter-core": "^3.4.3"}
+  "engines": {"node": ">=20.18.1"},
+  "dependencies": {
+    "@iobroker/adapter-core": "^3.4.3",
+    "axios": "^1.21.0",
+    "cheerio": "~1.1.2"
+  }
 }

@@ -2,17 +2,16 @@
 
 ioBroker-Adapter für Schulnachrichten, Stundenpläne, Vertretungspläne und Dokumente aus DSBmobile.
 
-> **Entwicklungsstand:** privater Prototyp. Adapter-Metadaten, Admin-Konfiguration und normalisiertes Datenmodell sind angelegt. Der authentifizierte DSBmobile-Web-API-Transport und die Parser für die einzelnen Datenquellen fehlen noch. Der aktuelle Adapter meldet deshalb bewusst keine erfolgreiche Verbindung.
+> **Entwicklungsstand:** privater Prototyp. Der Adapter enthält den authentifizierten Web-API-Client, einen Parser für das beobachtete Vertretungsplanformat, den Mehrklassenfilter und die initiale ioBroker-State-Struktur. Live-Abrufe aus dem Adapter und die Normalisierung aller Metadatenfelder müssen noch bestätigt werden.
 
 ## Ziele
 
-- Anmeldung über die Webportal-API, die für das Zielportal getestet wurde.
 - Schulweite Daten pro Abruf laden und Vertretungseinträge lokal für jede konfigurierte Klasse filtern.
-- Vertretungspläne, reguläre Stundenpläne, Nachrichten und Dokumente in getrennten ioBroker-Bereichen ablegen.
-- Neue, entfernte und geänderte Inhalte über stabile Snapshots erkennen, damit nachgelagerte ioBroker-Skripte gezielt Benachrichtigungen auslösen können.
+- Vertretungspläne, reguläre Stundenpläne, Nachrichten und Dokumente getrennt in ioBroker ablegen.
+- Neue, entfernte und geänderte Inhalte über stabile Snapshots erkennen, damit ioBroker-Skripte gezielt Benachrichtigungen auslösen können.
 - Den Adapter unabhängig von `@udondan/dsbmobile` entwickeln und die API-Schicht separat halten.
 
-## Ergebnisse der ersten API-Untersuchung
+## Bestätigtes API-Protokoll
 
 Der manuelle Test des Zielportals konnte sich anmelden und folgende Quellen abrufen:
 
@@ -22,54 +21,61 @@ Der manuelle Test des Zielportals konnte sich anmelden und folgende Quellen abru
 | `newstab` | 3 Nachrichten |
 | `starttab` | 2 Dashboard-Einträge |
 | `dsbtimetables` | 7 Plan- und Dokumenteinträge |
-| `dsbdocuments` | 24 Dokumente; Anlagendaten liegen in untergeordneten Einträgen |
+| `dsbdocuments` | 24 Dokumente; Anlagen liegen in untergeordneten Einträgen |
 | Vertretungsplan-HTML | 2 Dateien geladen; Eintrag für `7/5` gefunden |
 
-Der gefundene Eintrag für `7/5` enthielt Stunde, Fach, Lehrkraft, Raum und Hinweis. Beim HTML-Download muss die tatsächliche Zeichencodierung (vermutlich Windows-1252 oder ISO-8859-1) berücksichtigt werden; für die Auswertung ist ein HTML-Parser statt einer Textsuche nötig.
+Die Request-Details aus dem erfolgreichen Test:
 
-Vor Implementierung des HTTP-Transports müssen URL, HTTP-Methode, Anfrageparameter, Antwortbeispiele und Gültigkeit der Sitzung anhand bereinigter Test-Fixtures dokumentiert werden. Zugangsdaten, Authentifizierungs-IDs und schulbezogene Originaldaten gehören nicht ins Repository.
+- API: `https://ihkapi.dsbcontrol.de`
+- Anmeldung: `GET /authid` mit Query-Parametern `user`, `password`, `bundleid`, `pushid`, `appversion` und `osversion`.
+- Daten: `GET /newstab`, `/starttab`, `/dsbtimetables` und `/dsbdocuments`, jeweils mit `authid` als Query-Parameter.
+- Portal-Header: `Origin: https://ihk.dsbmobile.de` und passender `Referer`.
+- Anlagen und Pläne: HTTPS-Links vom Host `www23content.dsbcontrol.de`.
+- HTML-Pläne: als Bytes laden und mit der angegebenen Zeichencodierung decodieren; ohne Charset-Angabe Windows-1252 verwenden.
+
+Die Auth-ID bleibt nur während eines Abrufzyklus im Arbeitsspeicher. Zugangsdaten, Auth-IDs und schulbezogene Content-URLs werden nicht in den Quellcode übernommen oder protokolliert. Die vollständigen JSON-Antworten und die Lebensdauer der Auth-ID waren nicht Teil der eingefügten Testausgabe; diese Details müssen noch anhand bereinigter Fixtures bestätigt werden.
+
+Der beobachtete Vertretungsplan enthält Tabellenzeilen mit zehn Zellen: Klasse, Stunde, bisherige Lehrkraft, bisheriges Fach, bisheriger Raum, neue Klasse, neue Lehrkraft, neues Fach, neuer Raum und Hinweis. Mehrere Klassen in einer Zelle werden einzeln aufgelöst.
 
 ## Konfiguration
 
 In den Adaptereinstellungen:
 
 - DSBmobile-Benutzername und -Passwort eintragen. Das Passwort ist für ioBroker-Verschlüsselung und Zugriffsschutz vorgesehen.
-- Eine oder mehrere Klassen eintragen, zum Beispiel `7/5` und `5/2`. Die Admin-Tabelle kann Zeilen hinzufügen, löschen und sortieren.
+- Eine oder mehrere Klassen eintragen, zum Beispiel `7/5` und `5/2`. Die Admin-Tabelle unterstützt Hinzufügen, Löschen und Sortieren.
 - Abrufintervall zwischen 5 und 1440 Minuten wählen.
-- Festlegen, welche Änderungskategorien für nachgelagerte Benachrichtigungslogik gemeldet werden sollen.
+- Festlegen, für welche Kategorien Änderungseinträge erstellt werden sollen.
 
-## Geplante Objektstruktur
+## Objektstruktur
 
 ```text
 dsbmobile.0
 ├── info
 │   ├── connection
 │   ├── lastCheck
-│   └── lastError
-├── substitutions
-│   └── byClass                 # konfigurierte Klassen und ihre Einträge
-├── timetables                  # reguläre Stunden- und andere Zeitpläne
-├── news                        # allgemeine Schulnachrichten
-├── documents                   # Dokumente und Anlagen
-└── events                      # Änderungszusammenfassungen für Skripte
+│   ├── lastError
+│   └── initialized
+├── substitutions.byClass       # Vertretungseinträge nach konfigurierter Klasse
+├── timetables.items             # rohe Stunden- und Zeitplaneinträge
+├── news.items                   # rohe Nachrichten
+├── documents.items              # Dokumente und Anlagenmetadaten
+└── events.lastChange            # zuletzt erkannte Änderungen
 ```
 
-Der erste Stand legt die Kanäle und leeren JSON-States der geplanten Datenbereiche an. Die API-Transport- und Parserlogik füllt sie später mit den abgerufenen Daten.
+API-Fehler einer einzelnen Quelle überschreiben deren zuletzt erfolgreiche Daten nicht. Der Fehler erscheint in `info.lastError`; erfolgreiche Quellen werden weiterhin aktualisiert. Die erste erfolgreiche Abfrage bildet den Ausgangsstand und löst keine Benachrichtigung aus.
 
-## Nächste Entwicklungsschritte
+## Implementierungsstand
 
-1. Bereinigte Anfrage- und Antwort-Fixtures für Anmeldung, `starttab`, `newstab`, `dsbtimetables`, `dsbdocuments` und den HTML-Download erfassen.
-2. HTTP-/Sitzungsclient implementieren und Sitzungsablauf sowie Fehlerbehandlung abdecken.
-3. Vertretungsplan-HTML mit passender Zeichencodierung parsen und Einträge allen konfigurierten Klassen zuordnen.
-4. Stundenpläne, Nachrichten und Dokumente samt mehrseitigen Anlagen normalisieren.
-5. ioBroker-States und Änderungsereignisse veröffentlichen.
-6. Gezielte Tests anhand bereinigter Fixtures ergänzen und Installation sowie Konfiguration dokumentieren.
-
-## Aktueller Implementierungsstand
-
-- `main.js` startet den Adapter, legt die geplanten Datenkanäle und Statuswerte an und normalisiert die Klassenkonfiguration.
-- `src/data-model.js` bereinigt die Klassenliste, gruppiert geparste Einträge nach Klasse und berechnet deterministische SHA-256-Snapshot-Hashes.
+- `main.js` initialisiert die Datenkanäle, ruft die API direkt und anschließend alle konfigurierten Minuten ab, aktualisiert JSON-States und erkennt Änderungen über Snapshots.
+- `src/ihk-client.js` implementiert Authentifizierung, die vier GET-Datenquellen und sichere Downloads der erlaubten HTML-Content-URLs.
+- `src/substitution-parser.js` parst das beobachtete Zehn-Spalten-Tabellenformat und ordnet Zeilen den Klassen zu.
+- `src/data-model.js` bereinigt die Klassenliste, gruppiert Einträge nach Klasse und berechnet deterministische SHA-256-Snapshot-Hashes.
 - `admin/jsonConfig.json` definiert Konto, Abrufintervall, Mehrklassenkonfiguration und Änderungskategorien.
-- `io-package.json` enthält Adapter-Metadaten und kennzeichnet das Passwort als verschlüsselt und geschützt.
+- `io-package.json` deklariert die Adapter-Metadaten und schützt das Passwort.
 
-API-Transport und Datenabruf sind noch nicht implementiert. Der Adapter weist darauf in `info.lastError` hin, statt einen irreführenden Verbindungsstatus anzuzeigen.
+## Nächste Schritte
+
+1. Den Adapter mit den realen Zugangsdaten gegen das Portal laufen lassen und Auth-ID-Lebensdauer sowie Antwortformate bestätigen.
+2. Bereinigte JSON-Fixtures verwenden, um Nachrichten, Zeitpläne und Dokumentanlagen in stabile, dokumentierte Datenmodelle zu überführen.
+3. Weitere HTML-Varianten prüfen und Parserfälle ergänzen.
+4. Gezielte Tests für API-Antworten, Parsing und Änderungslogik ergänzen.
