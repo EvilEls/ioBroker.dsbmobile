@@ -54,7 +54,7 @@ dsbmobile.0
 └── events                      # Änderungszusammenfassungen für Skripte
 ```
 
-Der erste Stand legt nur die Adapter-Statusobjekte an. Die Datenbereiche kommen mit API-Transport und Parsern hinzu.
+Der erste Stand legt die Kanäle und leeren JSON-States der geplanten Datenbereiche an. Die API-Transport- und Parserlogik füllt sie später mit den abgerufenen Daten.
 
 ## Nächste Entwicklungsschritte
 
@@ -67,7 +67,7 @@ Der erste Stand legt nur die Adapter-Statusobjekte an. Die Datenbereiche kommen 
 
 ## Aktueller Implementierungsstand
 
-- `main.js` startet den Adapter, normalisiert die Klassenkonfiguration und initialisiert Statuswerte.
+- `main.js` startet den Adapter, legt die geplanten Datenkanäle und Statuswerte an und normalisiert die Klassenkonfiguration.
 - `src/data-model.js` bereinigt die Klassenliste, gruppiert geparste Einträge nach Klasse und berechnet deterministische SHA-256-Snapshot-Hashes.
 - `admin/jsonConfig.json` definiert Konto, Abrufintervall, Mehrklassenkonfiguration und Änderungskategorien.
 - `io-package.json` enthält Adapter-Metadaten und kennzeichnet das Passwort als verschlüsselt und geschützt.

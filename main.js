@@ -12,6 +12,7 @@ class Dsbmobile extends utils.Adapter {
     }
 
     async onReady() {
+        await this.createDataObjects();
         await this.setStateAsync('info.connection', false, true);
         await this.setStateAsync('info.lastCheck', '', true);
         await this.setStateAsync('info.lastError', '', true);
@@ -28,6 +29,48 @@ class Dsbmobile extends utils.Adapter {
         // Do not report a connection until an authenticated request succeeds.
         await this.setStateAsync('info.lastError', 'DSBmobile API transport is not implemented yet.', true);
         this.log.info(`Configuration loaded for ${classes.length} class(es); API transport is not implemented yet.`);
+    }
+
+    async createDataObjects() {
+        const channels = [
+            ['substitutions', 'Vertretungspläne'],
+            ['timetables', 'Stunden- und Zeitpläne'],
+            ['news', 'Schulnachrichten'],
+            ['documents', 'Dokumente'],
+            ['events', 'Änderungen'],
+        ];
+        for (const [id, name] of channels) {
+            await this.setObjectNotExistsAsync(id, {
+                type: 'channel',
+                common: {name},
+                native: {},
+            });
+        }
+
+        await this.createJsonState('substitutions.byClass', 'Vertretungseinträge nach Klasse', {});
+        await this.createJsonState('timetables.items', 'Stunden- und Zeitpläne', []);
+        await this.createJsonState('news.items', 'Schulnachrichten', []);
+        await this.createJsonState('documents.items', 'Dokumente und Anlagen', []);
+        await this.createJsonState('events.lastChange', 'Letzte erkannte Änderung', {});
+    }
+
+    async createJsonState(id, name, initialValue) {
+        await this.setObjectNotExistsAsync(id, {
+            type: 'state',
+            common: {
+                name,
+                type: 'string',
+                role: 'json',
+                read: true,
+                write: false,
+                def: JSON.stringify(initialValue),
+            },
+            native: {},
+        });
+
+        if (!(await this.getStateAsync(id))) {
+            await this.setStateAsync(id, JSON.stringify(initialValue), true);
+        }
     }
 
     onUnload(callback) {
