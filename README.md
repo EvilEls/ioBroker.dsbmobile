@@ -28,6 +28,7 @@ Die Request-Details aus dem erfolgreichen Test:
 
 - API: `https://ihkapi.dsbcontrol.de`
 - Anmeldung: `GET /authid` mit Query-Parametern `user`, `password`, `bundleid`, `pushid`, `appversion` und `osversion`.
+- Im erfolgreichen Test verwendete Portalparameter: `bundleid=de.heinekingmedia.ihkweb`, `pushid=pushtestid`, `appversion=1000`, `osversion=2334`.
 - Daten: `GET /newstab`, `/starttab`, `/dsbtimetables` und `/dsbdocuments`, jeweils mit `authid` als Query-Parameter.
 - Portal-Header: `Origin: https://ihk.dsbmobile.de` und passender `Referer`.
 - Anlagen und Pläne: HTTPS-Links vom Host `www23content.dsbcontrol.de`.
