@@ -1,0 +1,48 @@
+{
+  "common": {
+    "name": "dsbmobile",
+    "version": "0.1.0",
+    "title": "DSBmobile",
+    "titleLang": {"en": "DSBmobile", "de": "DSBmobile"},
+    "desc": {"en": "Reads school information, timetables and substitution plans from DSBmobile.", "de": "Liest Schulnachrichten, Stundenpläne und Vertretungspläne aus DSBmobile."},
+    "authors": ["EvilEls <github@theevilels.de>"],
+    "keywords": ["school", "timetable", "substitution-plan"],
+    "license": "UNLICENSED",
+    "platform": "Javascript/Node.js",
+    "icon": "dsbmobile.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/EvilEls/ioBroker.dsbmobile/main/admin/dsbmobile.png",
+    "readme": "https://github.com/EvilEls/ioBroker.dsbmobile/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "communication",
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "adminUI": {"config": "json"},
+    "messagebox": true,
+    "supportCustoms": false,
+    "supportCompactMode": true,
+    "connectionIndicator": true,
+    "dependencies": [{"js-controller": ">=6.0.11"}],
+    "globalDependencies": [{"admin": ">=7.6.20"}]
+  },
+  "encryptedNative": ["password"],
+  "protectedNative": ["password"],
+  "native": {
+    "username": "",
+    "password": "",
+    "classes": [],
+    "pollIntervalMinutes": 15,
+    "notifySubstitutions": true,
+    "notifyNews": false,
+    "notifyDocuments": false,
+    "notifyTimetables": false
+  },
+  "objects": [],
+  "instanceObjects": [
+    {"_id": "info", "type": "channel", "common": {"name": "Information"}, "native": {}},
+    {"_id": "info.connection", "type": "state", "common": {"name": "Connection to DSBmobile", "type": "boolean", "role": "indicator.connected", "read": true, "write": false, "def": false}, "native": {}},
+    {"_id": "info.lastCheck", "type": "state", "common": {"name": "Last successful check", "type": "string", "role": "value.time", "read": true, "write": false}, "native": {}},
+    {"_id": "info.lastError", "type": "state", "common": {"name": "Last error", "type": "string", "role": "text", "read": true, "write": false}, "native": {}}
+  ]
+}

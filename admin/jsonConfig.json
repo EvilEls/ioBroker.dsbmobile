@@ -1,0 +1,31 @@
+{
+  "type": "tabs",
+  "items": {
+    "account": {
+      "type": "panel",
+      "label": "Account",
+      "items": {
+        "username": {"type": "text", "label": "DSBmobile username", "sm": 6},
+        "password": {"type": "password", "label": "DSBmobile password", "sm": 6},
+        "pollIntervalMinutes": {"type": "number", "label": "Polling interval (minutes)", "min": 5, "max": 1440, "default": 15, "sm": 6},
+        "classes": {
+          "type": "table",
+          "label": "Classes to monitor",
+          "sm": 12,
+          "items": [{"type": "text", "width": "100%", "title": {"en": "Class (for example 7/5)", "de": "Klasse (zum Beispiel 7/5)"}, "attr": "className", "filter": false, "sort": false, "default": ""}],
+          "uniqueColumns": ["className"]
+        }
+      }
+    },
+    "notifications": {
+      "type": "panel",
+      "label": "Change events",
+      "items": {
+        "notifySubstitutions": {"type": "checkbox", "label": "Report changes to monitored substitution plans"},
+        "notifyNews": {"type": "checkbox", "label": "Report new school news"},
+        "notifyDocuments": {"type": "checkbox", "label": "Report new documents"},
+        "notifyTimetables": {"type": "checkbox", "label": "Report timetable changes"}
+      }
+    }
+  }
+}
