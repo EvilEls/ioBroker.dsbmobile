@@ -19,7 +19,7 @@
       "timetable",
       "substitution-plan"
     ],
-    "license": "UNLICENSED",
+    "license": "MIT",
     "platform": "Javascript/Node.js",
     "enabled": true,
     "readme": "https://github.com/EvilEls/ioBroker.dsbmobile/blob/main/README.md",
